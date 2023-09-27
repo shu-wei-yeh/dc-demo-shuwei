@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "utils"
+description = "DeepClean utilities library"
+version = "0.0.1"
+authors = ["Alec Gunny"]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+bokeh = "^3.0"
+h5py = "^3.6"
+scipy = "^1.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3"
+jupyter = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

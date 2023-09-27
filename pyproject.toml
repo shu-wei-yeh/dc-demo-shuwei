@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "deepclean"
+version = "0.0.1"
+description = "End-to-end DeepClean training, inference, and analysis repo"
+authors = [
+    "Alec Gunny <alec.gunny@ligo.org>",
+    "Tri Nguyen"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+luigi = "^3.0"
+law = "^0.1"
+jupyter = "^1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+known_first_party = ["deepclean", "train", "utils", "infer", "export"]
+multi_line_output = 3
+include_trailing_comma = true
