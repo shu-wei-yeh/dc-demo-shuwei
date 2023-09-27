@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 
-from deepclean import plotting as plot_utils
+from utils import plotting as plot_utils
 
 
 @torch.no_grad()

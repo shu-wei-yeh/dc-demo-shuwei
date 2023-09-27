@@ -3,9 +3,9 @@ import os
 import torch
 from lightning.pytorch.cli import LightningCLI
 
-from deepclean.logging import configure_logging
 from train.data import DeepCleanDataset
 from train.model import DeepClean
+from utils.logging import configure_logging
 
 
 class AframeCLI(LightningCLI):

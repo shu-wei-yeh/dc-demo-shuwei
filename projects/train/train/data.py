@@ -6,7 +6,7 @@ from lightning import pytorch as pl
 from ml4gw.dataloading import InMemoryDataset
 from ml4gw.transforms import ChannelWiseScaler
 
-from deepclean.filt import BandpassFilter
+from utils.filt import BandpassFilter
 
 
 # TODO: using this right now because

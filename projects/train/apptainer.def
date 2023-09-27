@@ -6,4 +6,4 @@ Stage: build
 ../.. /opt/deepclean
 
 %post
-python -m pip install -e /opt/deepclean/deepclean/train
+python -m pip install -e /opt/deepclean/projects/train

@@ -376,24 +376,6 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "deepclean"
-version = "0.0.1"
-description = "DeepClean utilities library"
-category = "main"
-optional = false
-python-versions = ">=3.9,<3.13"
-develop = true
-
-[package.dependencies]
-bokeh = "^3.0"
-h5py = "^3.6"
-scipy = "^1.10"
-
-[package.source]
-type = "directory"
-url = "../utils"
-
-[[package]]
 name = "deepdiff"
 version = "6.5.0"
 description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
@@ -944,7 +926,7 @@ test = ["flaky", "pexpect", "pytest"]
 
 [[package]]
 name = "jupyter-core"
-version = "5.3.1"
+version = "5.3.2"
 description = "Jupyter core package. A base package on which Jupyter projects rely."
 category = "dev"
 optional = false
@@ -1293,7 +1275,7 @@ torchtyping = "^0.1"
 
 [package.source]
 type = "directory"
-url = "../../ml4gw"
+url = "../../toolbox/ml4gw"
 
 [[package]]
 name = "multidict"
@@ -2240,7 +2222,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "traitlets"
-version = "5.10.0"
+version = "5.10.1"
 description = "Traitlets Python configuration system"
 category = "main"
 optional = false
@@ -2317,6 +2299,24 @@ brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
 secure = ["certifi", "cryptography (>=1.9)", "idna (>=2.0.0)", "pyopenssl (>=17.1.0)", "urllib3-secure-extra"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
+
+[[package]]
+name = "utils"
+version = "0.0.1"
+description = "DeepClean utilities library"
+category = "main"
+optional = false
+python-versions = ">=3.9,<3.13"
+develop = true
+
+[package.dependencies]
+bokeh = "^3.0"
+h5py = "^3.6"
+scipy = "^1.10"
+
+[package.source]
+type = "directory"
+url = "../utils"
 
 [[package]]
 name = "uvicorn"
@@ -2465,7 +2465,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-ena
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "f238c79cf342f83eb987f73f5a7013055f11c9fa471a5ec43635231b3c9f3723"
+content-hash = "f57c4bd5957fd99add1d016b7717645d697d074a9c7083c1f2e0c82fd8233e65"
 
 [metadata.files]
 aiohttp = [
@@ -2901,7 +2901,6 @@ decorator = [
     {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
-deepclean = []
 deepdiff = [
     {file = "deepdiff-6.5.0-py3-none-any.whl", hash = "sha256:acdc1651a3e802415e0337b7e1192df5cd7c17b72fbab480466fdd799b9a72e7"},
     {file = "deepdiff-6.5.0.tar.gz", hash = "sha256:080b1359d6128f3f5f1738c6be3064f0ad9b0cc41994aa90a028065f6ad11f25"},
@@ -3130,8 +3129,8 @@ jupyter-console = [
     {file = "jupyter_console-6.6.3.tar.gz", hash = "sha256:566a4bf31c87adbfadf22cdf846e3069b59a71ed5da71d6ba4d8aaad14a53539"},
 ]
 jupyter-core = [
-    {file = "jupyter_core-5.3.1-py3-none-any.whl", hash = "sha256:ae9036db959a71ec1cac33081eeb040a79e681f08ab68b0883e9a676c7a90dce"},
-    {file = "jupyter_core-5.3.1.tar.gz", hash = "sha256:5ba5c7938a7f97a6b0481463f7ff0dbac7c15ba48cf46fa4035ca6e838aa1aba"},
+    {file = "jupyter_core-5.3.2-py3-none-any.whl", hash = "sha256:a4af53c3fa3f6330cebb0d9f658e148725d15652811d1c32dc0f63bb96f2e6d6"},
+    {file = "jupyter_core-5.3.2.tar.gz", hash = "sha256:0c28db6cbe2c37b5b398e1a1a5b22f84fd64cd10afc1f6c05b02fb09481ba45f"},
 ]
 jupyter-events = [
     {file = "jupyter_events-0.7.0-py3-none-any.whl", hash = "sha256:4753da434c13a37c3f3c89b500afa0c0a6241633441421f6adafe2fb2e2b924e"},
@@ -4211,8 +4210,8 @@ tqdm = [
     {file = "tqdm-4.66.1.tar.gz", hash = "sha256:d88e651f9db8d8551a62556d3cff9e3034274ca5d66e93197cf2490e2dcb69c7"},
 ]
 traitlets = [
-    {file = "traitlets-5.10.0-py3-none-any.whl", hash = "sha256:417745a96681fbb358e723d5346a547521f36e9bd0d50ba7ab368fff5d67aa54"},
-    {file = "traitlets-5.10.0.tar.gz", hash = "sha256:f584ea209240466e66e91f3c81aa7d004ba4cf794990b0c775938a1544217cd1"},
+    {file = "traitlets-5.10.1-py3-none-any.whl", hash = "sha256:07ab9c5bf8a0499fd7b088ba51be899c90ffc936ffc797d7b6907fc516bcd116"},
+    {file = "traitlets-5.10.1.tar.gz", hash = "sha256:db9c4aa58139c3ba850101913915c042bdba86f7c8a0dda1c6f7f92c5da8e542"},
 ]
 typeguard = [
     {file = "typeguard-4.1.5-py3-none-any.whl", hash = "sha256:8923e55f8873caec136c892c3bed1f676eae7be57cdb94819281b3d3bc9c0953"},
@@ -4238,6 +4237,7 @@ urllib3 = [
     {file = "urllib3-2.0.5-py3-none-any.whl", hash = "sha256:ef16afa8ba34a1f989db38e1dbbe0c302e4289a47856990d0682e374563ce35e"},
     {file = "urllib3-2.0.5.tar.gz", hash = "sha256:13abf37382ea2ce6fb744d4dad67838eec857c9f4f57009891805e0b5e123594"},
 ]
+utils = []
 uvicorn = [
     {file = "uvicorn-0.23.2-py3-none-any.whl", hash = "sha256:1f9be6558f01239d4fdf22ef8126c39cb1ad0addf76c40e760549d2c2f43ab53"},
     {file = "uvicorn-0.23.2.tar.gz", hash = "sha256:4d3cc12d7727ba72b64d12d3cc7743124074c0a69f7b201512fc50c3e3f1569a"},
