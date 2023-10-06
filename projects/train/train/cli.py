@@ -9,13 +9,9 @@ from utils.logging import configure_logging
 
 
 class AframeCLI(LightningCLI):
-    def before_instantiate_classes(self):
-        save_dir = self.config.trainer.logger[0].init_args.save_dir
-        os.makedirs(save_dir, exist_ok=True)
-        log_file = os.path.join(save_dir, "train.log")
-        configure_logging(log_file)
-
     def add_arguments_to_parser(self, parser):
+        parser.add_argument("--verbose", type=bool, default=False)
+
         parser.add_optimizer_args(torch.optim.Adam)
         parser.add_lr_scheduler_args(torch.optim.lr_scheduler.OneCycleLR)
 
@@ -42,8 +38,8 @@ class AframeCLI(LightningCLI):
 
         # link data arguments to metric
         parser.link_arguments(
-            "data.valid_stride",
-            "model.metric.init_args.stride",
+            "data.inference_sampling_rate",
+            "model.metric.init_args.inference_sampling_rate",
             apply_on="parse",
         )
         parser.link_arguments(
@@ -63,7 +59,6 @@ class AframeCLI(LightningCLI):
         )
 
         # link optimizer and scheduler args
-
         parser.link_arguments(
             "data.steps_per_epoch",
             "lr_scheduler.steps_per_epoch",
@@ -83,7 +78,14 @@ def main(args=None):
         save_config_kwargs={"overwrite": True},
         args=args,
     )
+
+    os.makedirs(cli.trainer.logger.log_dir, exist_ok=True)
+    log_file = os.path.join(cli.trainer.logger.log_dir, "train.log")
+    configure_logging(log_file, cli.config.verbose)
+
     cli.trainer.fit(cli.model, cli.datamodule)
+    if cli.datamodule.hparams.test_duration > 0:
+        cli.trainer.test(cli.model, cli.datamodule)
 
 
 if __name__ == "__main__":

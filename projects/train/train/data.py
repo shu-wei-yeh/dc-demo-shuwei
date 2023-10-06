@@ -51,16 +51,16 @@ class DeepCleanDataset(pl.LightningDataModule):
         freq_low: list[float],
         freq_high: list[float],
         batch_size: int,
-        duration: float,
+        train_duration: float,
+        test_duration: float,
         valid_frac: float,
         train_stride: float,
-        valid_stride: float,
-        offset: float = 0,
+        inference_sampling_rate: float,
+        start_offset: float = 0,
         filt_order: float = 8,
     ):
         super().__init__()
         self.save_hyperparameters()
-        self.__logger = logging.getLogger("DeepClean Dataset")
 
         # infer the sample rate of the data from the
         # metadata of the provided file and use that
@@ -70,16 +70,19 @@ class DeepCleanDataset(pl.LightningDataModule):
             # sample_rate will be 1 / dataset.attrs["dx"]
             dataset = f[channels[0]]
             self.sample_rate = dataset.attrs["sample_rate"]
-            self.__logger.info(f"Inferred sample rate {self.sample_rate}Hz")
+            total_duration = train_duration + test_duration
 
-            size = int(duration * self.sample_rate)
-            offset = int(offset * self.sample_rate)
+            size = int(total_duration * self.sample_rate)
+            offset = int(start_offset * self.sample_rate)
             if (len(dataset) - offset) < size:
                 datadur = len(dataset) / self.sample_rate
                 raise ValueError(
                     "Dataset {} only contains {}s worth of data, "
                     "expected at least {}s to train with offset {}".format(
-                        fname, datadur, duration, self.hparams.offset
+                        fname,
+                        datadur,
+                        total_duration,
+                        self.hparams.start_offset,
                     )
                 )
 
@@ -87,11 +90,11 @@ class DeepCleanDataset(pl.LightningDataModule):
         # up front so that this can be communicated
         # to any other modules that need it, e.g.
         # learning rate scheduler
-        size = int(duration * self.sample_rate)
+        train_size = int(train_duration * self.sample_rate)
         stride = int(train_stride * self.sample_rate)
         kernel_size = int(kernel_length * self.sample_rate)
         size = int(size * (1 - valid_frac))
-        samples_per_epoch = (size - kernel_size) // stride + 1
+        samples_per_epoch = (train_size - kernel_size) // stride + 1
         self.steps_per_epoch = int(samples_per_epoch // batch_size)
 
         # create some modules we'll use for pre/postprocessing
@@ -124,28 +127,50 @@ class DeepCleanDataset(pl.LightningDataModule):
             return X, y
         return batch
 
-    def setup(self, stage):
-        offset = int(self.hparams.offset * self.sample_rate)
-        size = int(self.hparams.duration * self.sample_rate)
+    def load_timeseries(self, split):
+        train_size = int(self.hparams.train_duration * self.sample_rate)
+        start = int(self.hparams.start_offset * self.sample_rate)
+        if split == "test":
+            start += train_size
+            size = int(self.hparams.test_duration * self.sample_rate)
+        else:
+            size = train_size
+        idx = slice(start, start + size)
 
-        # load in full training and validation data
-        self.__logger.info("Loading training data")
+        self.__logger.info(f"Loading {split} data")
         X = torch.zeros((self.num_witnesses, size))
         with h5py.File(self.hparams.fname, "r") as f:
-            y = torch.Tensor(f[self.strain_channel][offset : offset + size])
+            y = torch.Tensor(f[self.strain_channel][idx])
             for i, channel in enumerate(self.witness_channels):
-                X[i] = torch.Tensor(f[channel][offset : offset + size])
+                X[i] = torch.Tensor(f[channel][idx])
+        return X, y
 
-        # split it into training and validation segments
-        valid_dur = self.hparams.valid_frac * self.hparams.duration
-        valid_size = int(valid_dur * self.sample_rate)
-        train_size = size - valid_size
+    def setup(self, stage):
+        self.__logger = logging.getLogger("DeepClean Dataset")
+        self.__logger.info(f"Inferred data sample rate {self.sample_rate}Hz")
+        self.__logger.info(f"Setting up data for {stage} stage")
+
+        if stage != "fit":
+            self.test_X, self.test_y = self.load_timeseries("test")
+            self.test_X = self.X_scaler(self.test_X)
+            return
+
+        # if we're training, split the data into
+        # training and validation segments. Only
+        # use integer-second length validation segments
+        # since that's all we'll encounter at test time,
+        # and some of the validation logic relies on this
+        X, y = self.load_timeseries("train")
+        valid_size = int(self.hparams.valid_frac * len(y))
+        valid_length = int(valid_size / self.sample_rate)
+        valid_size = int(valid_length * self.sample_rate)
+
+        train_size = len(y) - valid_size
         split = [train_size, valid_size]
-
         self.__logger.info(
             "Training on first {} seconds, validating on "
             "remaining {} seconds".format(
-                self.hparams.duration - valid_dur, valid_dur
+                *[i / self.sample_rate for i in split]
             )
         )
         train_X, valid_X = torch.split(X, split, dim=1)
@@ -169,6 +194,10 @@ class DeepCleanDataset(pl.LightningDataModule):
         train_y = self.y_scaler(train_y)
         train_y = self.bandpass(train_y.numpy())
         self.train_y = torch.Tensor(train_y)
+
+        # we don't need to do any preprocessing on the
+        # validation target timeseries since we're
+        # going to do the cleaning in the "true" space
         self.valid_y = valid_y
         self.__logger.info("Data loading complete")
 
@@ -176,6 +205,11 @@ class DeepCleanDataset(pl.LightningDataModule):
         # iterate through our data as a single
         # tensor since this will be slightly faster
         X = torch.cat([self.train_y[None], self.train_X])
+
+        # move our dataset onto the GPU up front since
+        # each batch will be roughly the same amount of
+        # data anyway. TODO: generalize for arbitrary
+        # device ids in distributed training
         dataset = InMemoryDataset(
             X,
             kernel_size=self.kernel_size,
@@ -183,24 +217,28 @@ class DeepCleanDataset(pl.LightningDataModule):
             batches_per_epoch=self.steps_per_epoch,
             coincident=True,
             shuffle=True,
-            device="cuda:0",
+            device=f"cuda:{self.trainer.device_ids[0]}",
         )
         return dataset
 
-    def val_dataloader(self):
-        # We don't need our inputs and our outputs to
-        # step at the same pace since in general
-        # we won't clean one stride at a time. So rather
-        # than create a single dataloader for both the
-        # inputs and the targets, create an input
-        # dataloader that steps at the rate at which we
-        # want data to go into the network, and an output
-        # one that steps at the rate at which we actually
-        # do cleaning (1s frames).
+    def _async_loader(self, X, y):
+        """
+        We don't need our inputs and our outputs to
+        step at the same pace since in general
+        we won't clean one stride at a time. So rather
+        than create a single dataloader for both the
+        inputs and the targets, create an input
+        dataloader that steps at the rate at which we
+        want data to go into the network, and an output
+        one that steps at the rate at which we actually
+        do cleaning (1s frames).
+        """
+
+        stride = int(self.sample_rate / self.hparams.inference_sampling_rate)
         witnesses = InMemoryDataset(
-            self.valid_X,
+            X,
             kernel_size=int(self.sample_rate),
-            stride=int(self.hparams.valid_stride * self.sample_rate),
+            stride=stride,
             batch_size=4 * self.hparams.batch_size,
             coincident=True,
             shuffle=False,
@@ -208,7 +246,7 @@ class DeepCleanDataset(pl.LightningDataModule):
         )
 
         strain = InMemoryDataset(
-            self.valid_y[None],
+            y[None],
             kernel_size=int(self.sample_rate),
             stride=int(self.sample_rate),
             batch_size=4 * self.hparams.batch_size,
@@ -217,3 +255,9 @@ class DeepCleanDataset(pl.LightningDataModule):
             device="cpu",
         )
         return ZippedDataset(witnesses, strain)
+
+    def val_dataloader(self):
+        return self._async_loader(self.valid_X, self.valid_y)
+
+    def test_dataloader(self):
+        return self._async_loader(self.test_X, self.test_y)

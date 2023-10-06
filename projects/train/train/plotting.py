@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 
-from utils import plotting as plot_utils
+from utils.plotting import plot_psds as plot_psds_
 
 
 @torch.no_grad()
@@ -23,7 +23,7 @@ def plot_psds(
         if asd:
             x = x**0.5
         x = torch.quantile(x, 0.5, dim=0)
-        return x.detach().cpu().numpy()
+        return x.cpu().numpy()
 
     cleaned = _plottable_psd(cleaned)[mask]
     raw = _plottable_psd(strain)[mask]
@@ -32,6 +32,4 @@ def plot_psds(
     freqs = torch.arange(len(mask)).cpu().numpy()
     freqs = freqs / fftlength
     freqs = freqs[mask]
-    return plot_utils.plot_psds(
-        freqs, pred, raw, cleaned, asd=asd, fname=fname
-    )
+    return plot_psds_(freqs, pred, raw, cleaned, asd=asd, fname=fname)

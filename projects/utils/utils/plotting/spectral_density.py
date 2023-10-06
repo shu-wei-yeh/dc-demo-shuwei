@@ -1,12 +1,12 @@
 from typing import Optional
 
 import numpy as np
-from bokeh.io import save
 from bokeh.layouts import gridplot
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.palettes import Bright6 as palette
 from bokeh.plotting import figure
-from bokeh.resources import CDN
+
+from utils.plotting.utils import save
 
 
 def plot_psds(
@@ -82,5 +82,5 @@ def plot_psds(
 
     grid = gridplot([p1, p2], ncols=1, toolbar_location="right")
     if fname is not None:
-        save(grid, fname, title="DeepClean PSDs", resources=CDN)
+        save(grid, fname, title="DeepClean PSDs")
     return grid

@@ -44,14 +44,14 @@ class PsdRatio(torch.nn.Module):
         ratio = ratio[:, self.mask]
         if self.asd:
             ratio = ratio**0.5
-        loss = ratio.sum(dim=-1) / self.mask.sum()
+        loss = ratio.mean(dim=-1)
         return loss
 
 
 class OnlinePsdRatio(Metric):
     def __init__(
         self,
-        stride: float,
+        inference_sampling_rate: float,
         edge_pad: float,
         filter_pad: float,
         sample_rate: float,
@@ -59,7 +59,7 @@ class OnlinePsdRatio(Metric):
         y_scaler: torch.nn.Module,
     ) -> None:
         super().__init__()
-        self.stride = int(stride * sample_rate)
+        self.stride = int(sample_rate / inference_sampling_rate)
         self.filter_pad = int(filter_pad * sample_rate)
         self.edge_pad = int(edge_pad * sample_rate)
         self.sample_rate = sample_rate
@@ -106,9 +106,8 @@ class OnlinePsdRatio(Metric):
         set_idx += batch_offset[:, None] * self.stride
 
         for i, y in enumerate(self.predictions):
-            gidx = get_idx[: len(y)]
             sidx = set_idx[: len(y)]
-            y_pred[sidx + i * batch_size * self.stride] = y[:, gidx]
+            y_pred[sidx + i * batch_size * self.stride] = y[:, get_idx]
 
             # for the very first frame, we have no choice
             # but to fill the left side with our predictions.

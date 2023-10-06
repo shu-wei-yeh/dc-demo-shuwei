@@ -6,4 +6,7 @@ Stage: build
 ../.. /opt/deepclean
 
 %post
-python -m pip install -e /opt/deepclean/projects/train
+python -m pip install poetry
+poetry config virtualenvs.create false
+cd /opt/deepclean/projects/train
+poetry install

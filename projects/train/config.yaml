@@ -21,43 +21,20 @@ model:
 data:
   # loading args
   # fname:
-  channels:
-  - "H1:GDS-CALIB_STRAIN"
-  - "H1:PEM-CS_MAINSMON_EBAY_1_DQ"
-  - "H1:ASC-INP1_P_INMON"
-  - "H1:ASC-INP1_Y_INMON"
-  - "H1:ASC-MICH_P_INMON"
-  - "H1:ASC-MICH_Y_INMON"
-  - "H1:ASC-PRC1_P_INMON"
-  - "H1:ASC-PRC1_Y_INMON"
-  - "H1:ASC-PRC2_P_INMON"
-  - "H1:ASC-PRC2_Y_INMON"
-  - "H1:ASC-SRC1_P_INMON"
-  - "H1:ASC-SRC1_Y_INMON"
-  - "H1:ASC-SRC2_P_INMON"
-  - "H1:ASC-SRC2_Y_INMON"
-  - "H1:ASC-DHARD_P_INMON"
-  - "H1:ASC-DHARD_Y_INMON"
-  - "H1:ASC-CHARD_P_INMON"
-  - "H1:ASC-CHARD_Y_INMON"
-  - "H1:ASC-DSOFT_P_INMON"
-  - "H1:ASC-DSOFT_Y_INMON"
-  - "H1:ASC-CSOFT_P_INMON"
-  - "H1:ASC-CSOFT_Y_INMON"
-  duration: 4096
+  # channels: []
+  train_duration: 4096
+  test_duration: 0
   train_stride: 0.0625
-  valid_frac: 0.25
-  valid_stride: 0.015625
-  offset: 0
+  valid_frac: 0.33
+  inference_sampling_rate: 64
+  start_offset: 0
 
   # preprocessing args
   batch_size: 512
   kernel_length: 8
-  freq_low:
-  - 55
-  freq_high:
-  - 65
-
+  filt_order: 8
+  # freq_low: []
+  # freq_high: []
 optimizer:
   lr: 0.512
 lr_scheduler:
@@ -73,6 +50,8 @@ trainer:
         flush_logs_every_n_steps: 10
   # devices:
   # strategy: set to ddp if len(devices) > 1
+  # don't get much of a boost from MP training right
+  # now because our convolutions aren't really large enough
   # precision: 16-mixed
   accelerator: auto
   max_epochs: 100
