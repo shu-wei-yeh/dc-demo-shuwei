@@ -51,7 +51,9 @@ mkdir -p $RESULTS_DIR
 I don't have this built into a `law.Task` yet, so you'll have to run this one manually. Start by building the container
 
 ```bash
-apptainer build $DEEPCLEAN_CONTAINER_ROOT/data.sif projects/data/apptainer.def
+cd projects/data
+apptainer build $DEEPCLEAN_CONTAINER_ROOT/data.sif apptainer.def
+cd -
 ```
 
 Then you can query segments containing usable data via
@@ -77,16 +79,18 @@ Once these tools are moved into the `deepclean` pipeline this will be done autom
 Once you've generated your training data, you're ready to train! Start by building your training container image
 
 ```bash
-apptainer build $DEEPCLEAN_CONTAINER_ROOT/train.sif projects/train/apptainer.def
+cd projects/train
+apptainer build $DEEPCLEAN_CONTAINER_ROOT/train.sif apptainer.def
+cd -
 ```
 
 Find a node with some decently-sized GPUs, ensure that the one you want isn't being used, and then run (assuming you built this library with `poetry`):
 
 ```bash
-GPU_INDEX=0  # or whichever you want
+export GPU_INDEX=0  # or whichever you want
 poetry run law run deepclean.tasks.Train  \
     --image train.sif \
     --gpus $GPU_INDEX \
-    --data-fname $DATA_DIR/deepclean-1250916945-35002.h5 \
+    --data-fname $DATA_DIR/deepclean-1250916945-35002.hdf5 \
     --output-dir $RESULTS_DIR/my-first-run
 ```

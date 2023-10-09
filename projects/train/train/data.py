@@ -66,10 +66,8 @@ class DeepCleanDataset(pl.LightningDataModule):
         # metadata of the provided file and use that
         # to ensure that we have enough data to train on
         with h5py.File(fname, "r") as f:
-            # TODO: start using TimeSeries.write and then
-            # sample_rate will be 1 / dataset.attrs["dx"]
             dataset = f[channels[0]]
-            self.sample_rate = dataset.attrs["sample_rate"]
+            self.sample_rate = 1 / dataset.attrs["dx"]
             total_duration = train_duration + test_duration
 
             size = int(total_duration * self.sample_rate)

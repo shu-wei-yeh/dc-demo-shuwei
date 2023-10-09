@@ -47,7 +47,10 @@ def main(args=None):
         prefix = args.pop("prefix")
         X = fetch(**args)
 
-        fname = "{prefix}-{start}-{end}.hdf5".format(prefix, **args)
+        duration = args["end"] - args["start"]
+        fname = "{}-{}-{}.hdf5".format(
+            prefix, int(args["start"]), int(duration)
+        )
         fname = os.path.join(output_directory, fname)
         X.write(fname, format="hdf5")
 
