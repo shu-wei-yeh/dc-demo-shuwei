@@ -23,7 +23,7 @@ data:
   # fname:
   # channels: []
   train_duration: 4096
-  test_duration: 0
+  test_duration: 8192
   train_stride: 0.0625
   valid_frac: 0.33
   inference_sampling_rate: 64
