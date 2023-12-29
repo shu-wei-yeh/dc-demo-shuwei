@@ -1,0 +1,15 @@
+universe = vanilla
+executable = /home/chiajui.chou/miniconda3/envs/igwn-py39/bin/python
+arguments = ./make_lldata.py --ifo $(ifo) --source $(source) --start $(start) --end $(end) --destination $(destination) --tag $(tag)
+
+request_cpus = 4
+request_memory = 4096MB
+request_disk = 2048MB
+getenv = True
+accounting_group = ligo.dev.o4.detchar.subtraction.deepclean
+
+log = make_lldata.log
+error = make_data.err
+output = make_data.out
+notification = never
+queue 1
