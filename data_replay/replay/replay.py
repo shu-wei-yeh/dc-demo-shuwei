@@ -15,16 +15,6 @@ parser.add_argument("-d", "--duration", default=None, type=int, help="The durati
 parser.add_argument("-k", "--keep", default=None, type=int, help="The number of the gwf files to keep in the destination directories.")
 args = parser.parse_args()
 
-replay_start = 1369291863
-duration = 16384
-keep = 300
-
-ifo = "K1"
-hoft_src = f"/data/ll_data/llhoft_buffer/{ifo}"
-woft_src = f"/data/ll_data/lldetchar_buffer/{ifo}"
-hoft_dest = f"/data/ll_data/kafka/{ifo}"
-woft_dest = f"/data/ll_data/lldetchar/{ifo}"
-
 def main():
     ifo = args.ifo
     hoft_src = args.hoft_source

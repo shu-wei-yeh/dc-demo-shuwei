@@ -1,7 +1,10 @@
 #!/bin/bash
 
-for ifo in H1 L1 K1;
-do
-    pkill -f "bash replay_${ifo}.sh"
-    pkill -f "python replay.py *"
-done
+function stop_replay {
+    ifo=$1
+    pkill -U $USER -f "python replay.py --ifo ${ifo}*"
+}
+
+stop_replay H1 &
+stop_replay L1 &
+stop_replay K1 &
