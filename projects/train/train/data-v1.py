@@ -7,7 +7,9 @@ from ml4gw.dataloading import InMemoryDataset
 from ml4gw.transforms import ChannelWiseScaler
 
 from utils.filt import BandpassFilter
+import os
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 # TODO: using this right now because
 # lightning.pytorch.utilities.CombinedLoader
@@ -150,63 +152,54 @@ class DeepCleanDataset(pl.LightningDataModule):
 
         if stage != "fit":
             self.test_X, self.test_y = self.load_timeseries("test")
-            self.test_X = self.X_scaler(self.test_X)
+            # Apply bandpass filter to test_X and then scale it
+            test_X_np = self.test_X.numpy()  # Convert to numpy for bandpass
+            for i in range(test_X_np.shape[0]):
+                test_X_np[i] = self.bandpass(test_X_np[i])  # Apply bandpass
+            self.test_X = torch.tensor(test_X_np, dtype=torch.float32)  # Convert back to tensor
+            self.test_X = self.X_scaler(self.test_X)  # Scale
             return
 
-        # if we're training, split the data into
-        # training and validation segments. Only
-        # use integer-second length validation segments
-        # since that's all we'll encounter at test time,
-        # and some of the validation logic relies on this
+        # Loading and splitting data into training and validation
         X, y = self.load_timeseries("train")
         valid_size = int(self.hparams.valid_frac * len(y))
         valid_length = int(valid_size / self.sample_rate)
         valid_size = int(valid_length * self.sample_rate)
-
         train_size = len(y) - valid_size
         split = [train_size, valid_size]
-        self.__logger.info(
-            "Training on first {} seconds, validating on "
-            "remaining {} seconds".format(
-                *[i / self.sample_rate for i in split]
-            )
-        )
         train_X, valid_X = torch.split(X, split, dim=1)
         train_y, valid_y = torch.split(y, split, dim=0)
 
+        # Preprocessing training data
         self.__logger.info("Preprocessing training data")
-        # Convert PyTorch tensors to numpy for bandpass filtering
-        train_X_np = train_X.numpy()
-        valid_X_np = valid_X.numpy()
-        
-        # Apply bandpass filter channel-wise
-        for i in range(self.num_witnesses):
-            train_X_np[i] = self.bandpass(train_X_np[i])
-            valid_X_np[i] = self.bandpass(valid_X_np[i])
-        
-        # Convert back to PyTorch tensors
+        self.X_scaler.fit(train_X)
+
+        # Apply bandpass filter to train_X and valid_X
+        train_X_np = train_X.numpy()  # Convert to numpy for bandpass
+        valid_X_np = valid_X.numpy()  # Convert to numpy for bandpass
+        for i in range(train_X_np.shape[0]):
+            train_X_np[i] = self.bandpass(train_X_np[i])  # Apply bandpass
+        for i in range(valid_X_np.shape[0]):
+            valid_X_np[i] = self.bandpass(valid_X_np[i])  # Apply bandpass
+        # Convert back to tensors
         train_X = torch.tensor(train_X_np, dtype=torch.float32)
         valid_X = torch.tensor(valid_X_np, dtype=torch.float32)
-        
-        # Normalize using the ChannelWiseScaler fitted on the training data
-        self.X_scaler.fit(train_X)
+
+        # Scale train_X and valid_X after bandpass filtering
         self.train_X = self.X_scaler(train_X)
         self.valid_X = self.X_scaler(valid_X)
 
-        # Apply bandpass filter to train_y
-        train_y_np = train_y.numpy()
-        train_y_filtered = self.bandpass(train_y_np)
-        train_y = torch.from_numpy(train_y_filtered).to(dtype=torch.float32)
-
-        # Fit and transform train_y using ChannelWiseScaler
+        # Processing train_y with bandpass filter and scaling
         self.y_scaler.fit(train_y)
-        self.train_y = self.y_scaler(train_y)
+        train_y_np = train_y.numpy()  # Convert to numpy for bandpass
+        train_y_np = self.bandpass(train_y_np)  # Apply bandpass
+        self.train_y = torch.tensor(train_y_np, dtype=torch.float32)  # Convert back to tensor
+        self.train_y = self.y_scaler(self.train_y)  # Scale
 
-        # we don't need to do any preprocessing on the
-        # validation target timeseries since we're
-        # going to do the cleaning in the "true" space
+        # No preprocessing on validation target timeseries
         self.valid_y = valid_y
         self.__logger.info("Data loading complete")
+
 
     def train_dataloader(self):
         # iterate through our data as a single

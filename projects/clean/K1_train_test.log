@@ -1,0 +1,15 @@
+Global seed set to 101588
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+Traceback (most recent call last):
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/shuwei.yeh/deepclean-demo-modifying/projects/train/train/__main__.py", line 4, in <module>
+    main()
+  File "/home/shuwei.yeh/deepclean-demo-modifying/projects/train/train/cli.py", line 93, in main
+    trainer = setup_trainer(args)
+NameError: name 'setup_trainer' is not defined

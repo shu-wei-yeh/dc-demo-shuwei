@@ -69,7 +69,6 @@ class DeepCleanDataset(pl.LightningDataModule):
             dataset = f[channels[0]]
             self.sample_rate = 1 / dataset.attrs["dx"]
             total_duration = train_duration + test_duration
-
             size = int(total_duration * self.sample_rate)
             offset = int(start_offset * self.sample_rate)
             if (len(dataset) - offset) < size:
@@ -125,6 +124,7 @@ class DeepCleanDataset(pl.LightningDataModule):
             return X, y
         return batch
 
+    # default
     def load_timeseries(self, split):
         train_size = int(self.hparams.train_duration * self.sample_rate)
         start = int(self.hparams.start_offset * self.sample_rate)
@@ -175,32 +175,23 @@ class DeepCleanDataset(pl.LightningDataModule):
         train_y, valid_y = torch.split(y, split, dim=0)
 
         self.__logger.info("Preprocessing training data")
-        # Convert PyTorch tensors to numpy for bandpass filtering
-        train_X_np = train_X.numpy()
-        valid_X_np = valid_X.numpy()
-        
-        # Apply bandpass filter channel-wise
-        for i in range(self.num_witnesses):
-            train_X_np[i] = self.bandpass(train_X_np[i])
-            valid_X_np[i] = self.bandpass(valid_X_np[i])
-        
-        # Convert back to PyTorch tensors
-        train_X = torch.tensor(train_X_np, dtype=torch.float32)
-        valid_X = torch.tensor(valid_X_np, dtype=torch.float32)
-        
-        # Normalize using the ChannelWiseScaler fitted on the training data
+        # preprocess our inputs by standardizing
+        # them to 0 mean unit variance across
+        # each channel
         self.X_scaler.fit(train_X)
         self.train_X = self.X_scaler(train_X)
         self.valid_X = self.X_scaler(valid_X)
 
-        # Apply bandpass filter to train_y
-        train_y_np = train_y.numpy()
-        train_y_filtered = self.bandpass(train_y_np)
-        train_y = torch.from_numpy(train_y_filtered).to(dtype=torch.float32)
-
-        # Fit and transform train_y using ChannelWiseScaler
+        # do the same to our output timeseries,
+        # but bandpass filter the targets up front
+        # in case we have a time-domain component
+        # to our loss function. We have to do the
+        # bandpass filtering back in numpy because
+        # I can't get torchaudio to work properly
         self.y_scaler.fit(train_y)
-        self.train_y = self.y_scaler(train_y)
+        train_y = self.y_scaler(train_y)
+        train_y = self.bandpass(train_y.numpy())
+        self.train_y = torch.Tensor(train_y)
 
         # we don't need to do any preprocessing on the
         # validation target timeseries since we're

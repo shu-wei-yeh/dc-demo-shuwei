@@ -1,7 +1,8 @@
 import os
 
 import h5py
-from lightning import Callback
+import torch
+from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 
 from train.plotting import plot_psds
@@ -10,11 +11,15 @@ from utils.plotting.utils import save
 
 class PsdPlotter(Callback):
     def on_fit_start(self, trainer, pl_module):
-        self.plot_dir = os.path.join(trainer.logger.log_dir, "plots")
+        log_dir = trainer.logger.log_dir or trainer.logger.save_dir
+
+        # TODO: support s3 here
+        self.plot_dir = os.path.join(log_dir, "plots")
         os.makedirs(self.plot_dir, exist_ok=True)
 
     def on_test_start(self, trainer, pl_module):
-        self.test_dir = os.path.join(trainer.logger.log_dir, "test")
+        log_dir = trainer.logger.log_dir or trainer.logger.save_dir
+        self.test_dir = os.path.join(log_dir, "test")
         os.makedirs(self.test_dir, exist_ok=True)
 
     def log_plots(self, layout, fname, trainer):
@@ -90,3 +95,40 @@ class PsdPlotter(Callback):
         with h5py.File(fname, "w") as f:
             f["noise"] = noise.cpu().numpy()
             f["strain"] = strain.cpu().numpy()
+
+
+class ModelCheckpoint(ModelCheckpoint):
+    def on_train_end(self, trainer, pl_module):
+        module = pl_module.__class__.load_from_checkpoint(
+            self.best_model_path,
+            arch=pl_module.model,
+            metric=pl_module.metric,
+            loss=pl_module.loss,
+        )
+
+        # TODO: we should probably establish an explicit
+        # validation_kernel_length that matches what
+        # we use at test time. If there were any issues
+        # with it, we would have caught it by now during
+        # validation, but worth making it explicit that
+        # these are different values.
+        datamodule = trainer.datamodule
+        kernel_size = int(
+            datamodule.hparams.kernel_length * datamodule.sample_rate
+        )
+
+        num_witnesses = len(datamodule.witness_channels)
+        sample_input = torch.randn(1, num_witnesses, kernel_size)
+        model = module.model.to("cpu")
+        trace = torch.jit.trace(model, sample_input)
+
+        save_dir = trainer.logger.log_dir or trainer.logger.save_dir
+        if save_dir.startswith("s3://"):
+            import s3fs
+
+            s3 = s3fs.S3FileSystem()
+            with s3.open(f"{save_dir}/model.pt", "wb") as f:
+                torch.jit.save(trace, f)
+        else:
+            with open(os.path.join(save_dir, "model.pt"), "wb") as f:
+                torch.jit.save(trace, f)

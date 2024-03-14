@@ -1,0 +1,37 @@
+Global seed set to 101588
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+The following callbacks returned in `LightningModule.configure_callbacks` will override existing callbacks passed to Trainer: ModelCheckpoint
+/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/fabric/loggers/csv_logs.py:195: UserWarning: Experiment logs directory /home/shuwei.yeh/deepclean/results/K1_results/lightning_logs/version_27 exists and is not empty. Previous log files in this directory will be deleted when the new ones are saved!
+  rank_zero_warn(
+2024-03-08 10:02:53,765 - DeepClean Dataset - INFO - Inferred data sample rate 16384.0Hz
+2024-03-08 10:02:53,765 - DeepClean Dataset - INFO - Setting up data for fit stage
+2024-03-08 10:02:53,765 - DeepClean Dataset - INFO - Loading train data
+Traceback (most recent call last):
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/shuwei.yeh/deepclean-demo-modifying/projects/train/train/__main__.py", line 4, in <module>
+    main()
+  File "/home/shuwei.yeh/deepclean-demo-modifying/projects/train/train/cli.py", line 89, in main
+    cli.trainer.fit(cli.model, cli.datamodule)
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/pytorch/trainer/trainer.py", line 532, in fit
+    call._call_and_handle_interrupt(
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/pytorch/trainer/call.py", line 43, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/pytorch/trainer/trainer.py", line 571, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/pytorch/trainer/trainer.py", line 941, in _run
+    call._call_setup_hook(self)  # allow user to setup lightning_module in accelerator environment
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/pytorch/trainer/call.py", line 85, in _call_setup_hook
+    _call_lightning_datamodule_hook(trainer, "setup", stage=fn)
+  File "/home/shuwei.yeh/miniconda3/envs/dc-demo-test/lib/python3.9/site-packages/lightning/pytorch/trainer/call.py", line 166, in _call_lightning_datamodule_hook
+    return fn(*args, **kwargs)
+  File "/home/shuwei.yeh/deepclean-demo-modifying/projects/train/train/data.py", line 164, in setup
+    X, y = self.load_timeseries("train")
+  File "/home/shuwei.yeh/deepclean-demo-modifying/projects/train/train/data.py", line 145, in load_timeseries
+    X[i] = torch.Tensor(f[channel][idx])
+RuntimeError: The expanded size of the tensor (67108864) must match the existing size (25165824) at non-singleton dimension 0.  Target sizes: [67108864].  Tensor sizes: [25165824]

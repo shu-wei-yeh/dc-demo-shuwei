@@ -1,0 +1,63 @@
+# commented args represent values filled out
+# by train task at run time. To build a functional
+# standalone config, add these in
+
+model:
+  arch:
+    class_path: train.architectures.Autoencoder
+    init_args:
+      hidden_channels: [8, 16, 32, 64]
+  loss:
+    class_path: train.metrics.PsdRatio
+    init_args:
+      fftlength: 2
+      asd: true
+  metric:
+    class_path: train.metrics.OnlinePsdRatio
+    init_args:
+      filter_pad: 0.5
+      edge_pad: 0.25
+  patience: 8
+data:
+  # loading args
+  # fname:
+  channels: [
+    H1:GDS-CALIB_STRAIN,
+    H1:PEM-CS_MAINSMON_EBAY_1_DQ
+    ]
+  train_duration: 4096
+  test_duration: 8192
+  train_stride: 0.25
+  valid_frac: 0.33
+  inference_sampling_rate: 512
+  start_offset: 0
+
+  # preprocessing args
+  batch_size: 256
+  kernel_length: 8
+  filt_order: 8
+  freq_low: [55]
+  freq_high: [65]
+optimizer:
+  lr: 0.032
+lr_scheduler:
+  pct_start: 0.33
+trainer:
+  # by default, use a local CSV logger.
+  # Options in train task for using a
+  # wandb logger instead
+  logger:
+    - class_path: lightning.pytorch.loggers.CSVLogger
+      init_args:
+        # save_dir:
+        flush_logs_every_n_steps: 10
+  # devices:
+  # strategy: set to ddp if len(devices) > 1
+  # don't get much of a boost from MP training right
+  # now because our convolutions aren't really large enough
+  # precision: 16-mixed
+  accelerator: auto
+  max_epochs: 400
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 20
+  benchmark: true

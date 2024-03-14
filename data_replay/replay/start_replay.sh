@@ -2,9 +2,9 @@
 #set -x
 
 HOFT_SOURCE=/home/chiajui.chou/ll_data/llhoft_buffer
-HOFT_DESTINATION=/home/chiajui.chou/ll_data/data/kafka
+HOFT_DESTINATION=/home/shuwei.yeh/Data_Gringotts_Bank/online_dc_data/ll_replay/data/kafka
 WITNESS_SOURCE=/home/chiajui.chou/ll_data/lldetchar_buffer
-WITNESS_DESTINATION=/home/chiajui.chou/ll_data/data/lldetchar
+WITNESS_DESTINATION=/home/shuwei.yeh/Data_Gringotts_Bank/online_dc_data/ll_replay/data/lldetchar
 START=1369291863
 DURATION=16384
 KEEP=300
@@ -31,6 +31,6 @@ function start_replay {
     python "${python_params[@]}"
 }
 
-start_replay H1 &> replay_H1.out &
-start_replay L1 &> replay_L1.out &
+# start_replay H1 &> replay_H1.out &
+# start_replay L1 &> replay_L1.out &
 start_replay K1 &> replay_K1.out &
